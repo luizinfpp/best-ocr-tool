@@ -1,10 +1,53 @@
-import Image from "next/image";
+"use client"
 import localFont from "@next/font/local";
 import DragAndDropComponent from "../components/drag-and-drop";
+import TextFieldComponent from "../components/text-field";
+import { useEffect, useState } from "react";
+import { createWorker } from "tesseract.js";
+import { ref, listAll } from "firebase/storage";
+import storage from "../utils/firebase";
 
 const myFont = localFont({ src: "../public/Comfortaa-VariableFont_wght.ttf" });
 
 export default function Home() {
+
+  const [textOcr, setTextOcr] = useState("");
+
+  const filesToOCR = [];
+
+  const worker = createWorker({
+    errorHandler: (err) => console.error(err),
+  });
+
+  const DoOcr = async () => {
+    await worker.load();
+    await worker.loadLanguage("por");
+    await worker.initialize("por");
+    const {
+      data: { text },
+    } = await worker.recognize("https://firebasestorage.googleapis.com/v0/b/firstapp-229cf.appspot.com/o/OCR%20app%2FCapturar.PNG?alt=media&token=afde5e70-745c-410a-80ae-d60d10568779");
+    setTextOcr(text);
+    console.log(text);
+    await worker.terminate();
+  };
+
+  const GetImages = () => {
+    const OCRImagesRef = ref(storage, "OCR app");
+    
+    listAll(OCRImagesRef).then((res) => {
+      res.items.forEach((item) => {
+        console.log(item);
+
+        
+      });
+    });
+  };
+
+  useEffect(() => {
+    //GetImages();
+    //DoOcr();
+  }, []);
+
   return (
     <main
       className={myFont.className}
@@ -14,19 +57,24 @@ export default function Home() {
         className="p-2 flex justify-center items-center flex-col"
         style={{ width: "100%", height: "100%" }}
       >
-        <h1 className="text-teal-700 text-5xl font-bold text-center mb-10">
+        <h1 className="text-teal-700 text-5xl font-bold text-center mb-12 select-none">
           O Melhor OCR da Galáxia
         </h1>
-        <div >
-          <div className="flex gap-2 mb-3">
-            <span className="bg-teal-700 text-white text-[0.9rem] hover:bg-teal-900 hover:cursor-pointer px-3 py-2 text-center rounded-lg">
-              Escolher Arquivo
-            </span>
-            <span className="bg-teal-700 text-white text-[0.9rem] hover:bg-teal-900 hover:cursor-pointer px-3 py-2 text-center rounded-lg">
-              Colar imagem
-            </span>
+        <div className="flex gap-12">
+          <div>
+            <div className="flex gap-2 mb-3">
+              <span className="bg-teal-700 text-white text-[0.9rem] hover:bg-teal-900 hover:cursor-pointer px-3 py-2 text-center rounded-lg select-none">
+                Escolher Arquivo
+              </span>
+              <span className="bg-teal-700 text-white text-[0.9rem] hover:bg-teal-900 hover:cursor-pointer px-3 py-2 text-center rounded-lg select-none">
+                Colar imagem
+              </span>
+            </div>
+            <DragAndDropComponent />
           </div>
-          <DragAndDropComponent />
+          <div>
+            <TextFieldComponent text="" />
+          </div>
         </div>
       </div>
     </main>
