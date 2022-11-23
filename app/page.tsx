@@ -12,6 +12,7 @@ const myFont = localFont({ src: "../public/Comfortaa-VariableFont_wght.ttf" });
 export default function Home() {
 
   const [textOcr, setTextOcr] = useState("");
+  const [fileList, setFileList] = useState<Array<String>>([]);
 
   const filesToOCR = [];
 
@@ -33,18 +34,21 @@ export default function Home() {
 
   const GetImages = () => {
     const OCRImagesRef = ref(storage, "OCR app");
+
+    let names : Array<String> = [];
     
     listAll(OCRImagesRef).then((res) => {
       res.items.forEach((item) => {
-        console.log(item);
-
-        
+        names.push(item.name);
       });
+    }).then(() => {
+      setFileList(names);
     });
+    
   };
 
   useEffect(() => {
-    //GetImages();
+    GetImages();
     //DoOcr();
   }, []);
 
@@ -57,11 +61,11 @@ export default function Home() {
         className="p-2 flex justify-center items-center flex-col"
         style={{ width: "100%", height: "100%" }}
       >
-        <h1 className="text-teal-700 text-5xl font-bold text-center mb-12 select-none">
+        <h1 className="text-teal-700 text-5xl font-bold text-center my-12 select-none">
           O Melhor OCR da Galáxia
         </h1>
-        <div className="flex gap-12">
-          <div>
+        <div className="flex gap-12 grow pb-14">
+          <div className="flex flex-col">
             <div className="flex gap-2 mb-3">
               <span className="bg-teal-700 text-white text-[0.9rem] hover:bg-teal-900 hover:cursor-pointer px-3 py-2 text-center rounded-lg select-none">
                 Escolher Arquivo
@@ -70,7 +74,7 @@ export default function Home() {
                 Colar imagem
               </span>
             </div>
-            <DragAndDropComponent />
+            <DragAndDropComponent nameList={fileList}/>
           </div>
           <div>
             <TextFieldComponent text="" />
