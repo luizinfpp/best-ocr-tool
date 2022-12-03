@@ -1,5 +1,4 @@
 import './globals.css'
-import FilesContextProvider from '../contexts/filesContext'
 
 export default function RootLayout({
   children,
@@ -14,9 +13,7 @@ export default function RootLayout({
       */}
       
       <head />
-      <FilesContextProvider>
-        <body>{children}</body>
-      </FilesContextProvider>
+      <body>{children}</body>
     </html>
   )
 }

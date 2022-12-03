@@ -3,6 +3,7 @@ import localFont from "@next/font/local";
 import DragAndDropComponent from "../components/drag-and-drop";
 import TextFieldComponent from "../components/text-field";
 import { FormEvent, useEffect, useRef, useState } from "react";
+import FilesContextProvider from "../contexts/filesContext";
 import { createWorker } from "tesseract.js";
 import { ref, listAll } from "firebase/storage";
 import storage from "../utils/firebase";
@@ -66,32 +67,34 @@ export default function Home() {
       className={myFont.className}
       style={{ backgroundColor: "#e2eef6", width: "100vw", height: "100vh" }}
     >
-      <div
-        className="p-2 flex justify-center items-center flex-col"
-        style={{ width: "100%", height: "100%" }}
-      >
-        <h1 className="text-teal-700 text-5xl font-bold text-center my-12 select-none">
-          O Melhor OCR da Galáxia
-        </h1>
-        <div className="flex gap-12 grow pb-14">
-          <div className="flex flex-col">
-            <div className="flex gap-2 mb-3">
-              <input type="file" name="fileUploader" style={{display: 'none'}} ref={inputFileRef} onChange={handleInputFileChange}/>
-              <span className="bg-teal-700 text-white text-[0.9rem] hover:bg-teal-900 hover:cursor-pointer px-3 py-2 text-center rounded-lg select-none"
-              onClick={handleInputFileBtnClick}>
-                Escolher Arquivo
-              </span>
-              <span className="bg-teal-700 text-white text-[0.9rem] hover:bg-teal-900 hover:cursor-pointer px-3 py-2 text-center rounded-lg select-none">
-                Colar imagem
-              </span>
+      <FilesContextProvider>
+        <div
+          className="p-2 flex justify-center items-center flex-col"
+          style={{ width: "100%", height: "100%" }}
+        >
+          <h1 className="text-teal-700 text-5xl font-bold text-center my-12 select-none">
+            O Melhor OCR da Galáxia
+          </h1>
+          <div className="flex gap-12 grow pb-14">
+            <div className="flex flex-col">
+              <div className="flex gap-2 mb-3">
+                <input type="file" name="fileUploader" style={{display: 'none'}} ref={inputFileRef} onChange={handleInputFileChange}/>
+                <span className="bg-teal-700 text-white text-[0.9rem] hover:bg-teal-900 hover:cursor-pointer px-3 py-2 text-center rounded-lg select-none"
+                onClick={handleInputFileBtnClick}>
+                  Escolher Arquivo
+                </span>
+                <span className="bg-teal-700 text-white text-[0.9rem] hover:bg-teal-900 hover:cursor-pointer px-3 py-2 text-center rounded-lg select-none">
+                  Colar imagem
+                </span>
+              </div>
+              <DragAndDropComponent nameList={fileList}/>
             </div>
-            <DragAndDropComponent nameList={fileList}/>
-          </div>
-          <div>
-            <TextFieldComponent text="" />
+            <div>
+              <TextFieldComponent text="" />
+            </div>
           </div>
         </div>
-      </div>
+      </FilesContextProvider>
     </main>
   );
 }
