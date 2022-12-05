@@ -1,14 +1,14 @@
 import React, { createContext, useReducer} from 'react';
 import { filesReducer } from '../reducers/filesReducer'
 
-export const FilesContext = createContext({});
+export const FilesContext = createContext({ files: new Array<File>(), dispatch: new Function});
 
 const FilesContextProvider = (props : any) => {
 
   const [files, dispatch] = useReducer(filesReducer, []);
-    
+   
   return (    
-    <FilesContext.Provider value={{ files, dispatch}}>
+    <FilesContext.Provider value={{ files, dispatch }}>
       {props.children}
     </FilesContext.Provider>
   );

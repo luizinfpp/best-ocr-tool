@@ -1,3 +1,5 @@
+"use client"
+import FilesContextProvider from '../contexts/filesContext'
 import './globals.css'
 
 export default function RootLayout({
@@ -13,7 +15,7 @@ export default function RootLayout({
       */}
       
       <head />
-      <body>{children}</body>
+      <body><FilesContextProvider>{children}</FilesContextProvider></body>
     </html>
   )
 }

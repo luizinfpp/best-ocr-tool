@@ -1,29 +1,41 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useFiles } from "../hooks/useFiles";
 
 type DragDropProps = {
-  nameList: Array<String>;
+  fileList: Array<File>;
 };
 
-const DragAndDropComponent = ({ nameList }: DragDropProps) => {
+const DragAndDropComponent = ({ fileList }: DragDropProps) => {
   const [dragActive, setDragActive] = useState(false);
+
+  const filesOp = useFiles();
+
+  const DeleteFile = (file: File) => {
+    filesOp.deleteFile(file);
+  };
+
+  useEffect(() => {
+    console.log(dragActive);
+  }, [dragActive]);
 
   return (
     <div
       className={`flex grow relative overflow-hidden justify-center items-center rounded-3xl border-teal-700 border-dashed border-2`}
       onDragEnter={() => setDragActive(true)}
-        onDragLeave={() => setDragActive(false)}
+      onDragLeave={() => setDragActive(false)}
     >
-      {dragActive && <div
-        className={`absolute bg-white/80 flex justify-center items-center`}
-        style={{ width: "100%", height: "100%" }}
-      >
-        
+      {dragActive && (
+        <div
+          className={`absolute bg-white/80 flex justify-center items-center z-10`}
+          style={{ width: "100%", height: "100%" }}
+        >
           <p className="text-center text-xl text-gray-600 select-none">
             Solte a imagem aqui para adicionar
           </p>
-      </div>}
-      {nameList.length == 0 && (
+        </div>
+      )}
+      {fileList.length == 0 && (
         <div
           className="p-5 flex justify-center items-center"
           style={{ width: "25vw", height: "100%" }}
@@ -41,23 +53,24 @@ const DragAndDropComponent = ({ nameList }: DragDropProps) => {
           </p>
         </div>
       )}
-      {nameList.length > 0 && (
+      {fileList.length > 0 && (
         <div
           className="p-4 text-md text-gray-500 leading-loose select-none"
           style={{ width: "25vw", height: "100%" }}
         >
-          {nameList.map((name, index) => {
+          {fileList.map((file, index) => {
             return (
               <div key={index} className="flex items-center my-1">
-                <p className="select-none me-2">{name}</p>
-                <span className="fill-gray-400 text-[0.9rem] hover:fill-teal-900 hover:cursor-pointer p-1 pb-2 text-center rounded-lg select-none flex items-center"
-                  style={{width: 32, height: 32}}
+                <p className="select-none me-2">{file.name}</p>
+                <span
+                  className="fill-gray-400 text-[0.9rem] hover:fill-teal-900 hover:cursor-pointer p-1 pb-2 text-center rounded-lg select-none flex items-center"
+                  style={{ width: 32, height: 32 }}
+                  onClick={() => DeleteFile(file)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
                     <path d="m12.45 38.35-2.8-2.8L21.2 24 9.65 12.45l2.8-2.8L24 21.2 35.55 9.65l2.8 2.8L26.8 24l11.55 11.55-2.8 2.8L24 26.8Z" />
                   </svg>
                 </span>
-                
               </div>
             );
           })}
