@@ -6,49 +6,73 @@ import { FormEvent, useContext, useEffect, useRef, useState } from "react";
 import { FilesContext } from "../contexts/filesContext";
 import { createWorker } from "tesseract.js";
 import { useFiles } from "../hooks/useFiles";
-import { ref, listAll } from "firebase/storage";
-import storage from "../utils/firebase";
+import { useStorage } from "../hooks/useStorage";
+import { url } from "inspector";
 
 const myFont = localFont({ src: "../public/Comfortaa-VariableFont_wght.ttf" });
 
 export default function Home() {
   const [textOcr, setTextOcr] = useState("");
+  const [loading, setLoading] = useState(0);
 
   const { files }: { files: Array<File> } = useContext(FilesContext);
   const inputFileRef = useRef<HTMLInputElement>(null);
-  const fileOp = useFiles();
+  const pasteFileRef = useRef<HTMLDivElement>(null);
+  const filesOp = useFiles();
+  const storageOp = useStorage();
 
   const worker = createWorker({
     errorHandler: (err) => console.error(err),
   });
 
   const DoOcr = async () => {
+    let urlList: string[] = [];
+
     await worker.load();
     await worker.loadLanguage("por");
     await worker.initialize("por");
-    const {
-      data: { text },
-    } = await worker.recognize(
-      "https://firebasestorage.googleapis.com/v0/b/firstapp-229cf.appspot.com/o/OCR%20app%2FCapturar.PNG?alt=media&token=afde5e70-745c-410a-80ae-d60d10568779"
-    );
-    setTextOcr(text);
-    await worker.terminate();
-  };
 
-  const GetImages = () => {
-    const OCRImagesRef = ref(storage, "OCR app");
+    let entireText: string = "";
 
-    let names: Array<String> = [];
+    const doFilesOCR = new Promise<void>((resolve, reject) => {
+      setLoading(1);
+      storageOp.uploadFiles(urlList);
+      setTimeout(() => {
+        resolve();
+      }, 2000);
+    });
 
-    listAll(OCRImagesRef)
-      .then((res) => {
-        res.items.forEach((item) => {
-          names.push(item.name);
+    doFilesOCR.then(() => {
+
+      //Cria uma promise para interpretar cada link -- na ordem da string
+      let requests = urlList.reduce((promiseChain, url) => {
+
+        return promiseChain.then(
+          () =>
+            new Promise<void>((resolve) => {
+              worker.recognize(url).then((res) => {
+                if (entireText == "") entireText += res.data.text;
+                else
+                  entireText = `${entireText}
+                ${res.data.text}`;
+                resolve();
+              });
+            })
+        );
+      }, Promise.resolve());
+
+      //Ao fim da execução
+      requests
+        .then(() => {
+          worker.terminate().then(() => {
+            setTextOcr(entireText);
+            storageOp.deleteFiles();
+          });
+        })
+        .then(() => {
+          setLoading(0);
         });
-      })
-      .then(() => {
-        //setFileList(names);
-      });
+    });
   };
 
   const handleInputFileBtnClick = () => {
@@ -57,14 +81,54 @@ export default function Home() {
 
   const handleInputFileChange = (e: FormEvent<HTMLInputElement>) => {
     if (e.currentTarget.files != null) {
-      fileOp.addFile(e.currentTarget.files[0]);
+      filesOp.addFile(e.currentTarget.files[0]);
     }
   };
 
-  useEffect(() => {
-    //GetImages();
-    //DoOcr();
-  }, []);
+  async function handlePasteFileBtnClick() {
+    try {
+      const permission: any = navigator.permissions.query({
+        name: "clipboard-read" as PermissionName,
+      });
+      if (permission.state === "denied") {
+        throw new Error(
+          "O navegador não tem permissão para a leitura da área de transferência."
+        );
+      }
+
+      await navigator.clipboard.read().then((clipboardContents) => {
+        for (const item of clipboardContents) {
+          if (!item.types.filter(t => t.includes("image/png") || t.includes("image/jpg") || t.includes("image/bmp") || t.includes("image/webp"))) {
+            throw new Error(
+              "O conteúdo da área de transferência não é do tipo imagem."
+            );
+          }
+
+          item.getType("image/png").then((dropBlob) => {
+            let d: Date = new Date(Date.now());
+            let fileName: string =
+              "Clipboard_image_" +
+              d.getHours() +
+              d.getMinutes() +
+              d.getSeconds() +
+              d.getMilliseconds() +
+              ".png";
+
+            let f: File = new File([dropBlob], fileName, {type: item.types.filter(t => t.includes("image/png") || t.includes("image/jpg") || t.includes("image/bmp") || t.includes("image/webp"))[0]});
+
+            filesOp.addFile(f);
+          });
+        }
+      });
+    } catch (error: any) {
+      if ((error.name = "DataError"))
+        alert(
+          error.name +
+            ": O conteúdo da área de transferência é inválido. (Use um instantâneo. Se estiver tentando colar um arquivo já pronto, tente a funcionalidade de arrastar para a área pontilhada.)"
+        );
+      else alert(error.name + ": " + error.message);
+    }
+  }
 
   return (
     <main
@@ -95,14 +159,31 @@ export default function Home() {
               >
                 Escolher Arquivo
               </span>
-              <span className="bg-teal-700 text-white text-[0.9rem] hover:bg-teal-900 hover:cursor-pointer px-3 py-2 text-center rounded-lg select-none">
+              <span
+                className="bg-teal-700 text-white text-[0.9rem] hover:bg-teal-900 hover:cursor-pointer px-3 py-2 text-center rounded-lg select-none"
+                onClick={handlePasteFileBtnClick}
+                ref={pasteFileRef}
+              >
                 Colar imagem
               </span>
             </div>
             <DragAndDropComponent fileList={files} />
+            <span
+              className={` ${
+                loading > 0
+                  ? "bg-emerald-200 text-teal-700"
+                  : "bg-teal-700 text-white hover:bg-teal-900"
+              } text-[0.9rem] hover:cursor-pointer px-3 py-3 text-center rounded-lg select-none mt-3 font-bold text-lg`}
+              onClick={() => {
+                if (loading == 0) DoOcr();
+              }}
+              ref={pasteFileRef}
+            >
+              {loading > 0 ? "Carregando" : "Converter em texto"}
+            </span>
           </div>
           <div>
-            <TextFieldComponent text="" />
+            <TextFieldComponent text={textOcr} />
           </div>
         </div>
       </div>

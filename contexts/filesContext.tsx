@@ -1,4 +1,4 @@
-import React, { createContext, useReducer} from 'react';
+import React, { createContext, useEffect, useReducer} from 'react';
 import { filesReducer } from '../reducers/filesReducer'
 
 export const FilesContext = createContext({ files: new Array<File>(), dispatch: new Function});

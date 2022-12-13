@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useFiles } from "../hooks/useFiles";
 
 type DragDropProps = {
@@ -11,20 +11,64 @@ const DragAndDropComponent = ({ fileList }: DragDropProps) => {
 
   const filesOp = useFiles();
 
+  const AddDropFile = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    setDragActive(false);
+
+    if (
+      e.dataTransfer != null &&
+      e.dataTransfer.files &&
+      e.dataTransfer.files[0]
+    ) {
+      for (let index = 0; index < e.dataTransfer.files.length; index++) {
+        let nameSplit: string[] = e.dataTransfer.files[index].name.split(".");
+        let acceptedFiles: string[] = ["bmp", "jpg", "png", "webp"];
+
+        if (nameSplit.at(-1) != undefined) {
+          // Tells typescript i am sure that is not undefined (because i tested before ok, use that carefully)
+          let ext = nameSplit.at(-1)!.toLowerCase();
+          if (acceptedFiles.includes(ext)) {
+            filesOp.addFile(e.dataTransfer.files[index]);
+          }
+        }
+      }
+    }
+  };
+
+  const ActivateDrag = (e: React.DragEvent) => {
+    let event = e as React.DragEvent;
+    setDragActive(true);
+    event.stopPropagation();
+    event.preventDefault();
+  };
+
+  const DeactivateDrag = (e: React.DragEvent) => {
+    let event = e as React.DragEvent;
+    setDragActive(false);
+    event.stopPropagation();
+    event.preventDefault();
+  };
+
   const DeleteFile = (file: File) => {
     filesOp.deleteFile(file);
   };
 
-  useEffect(() => {
-    console.log(dragActive);
-  }, [dragActive]);
-
   return (
     <div
       className={`flex grow relative overflow-hidden justify-center items-center rounded-3xl border-teal-700 border-dashed border-2`}
-      onDragEnter={() => setDragActive(true)}
-      onDragLeave={() => setDragActive(false)}
+      onDragOver={(e) => ActivateDrag(e)}
+      onDrop={(event) => AddDropFile(event)}
     >
+      {/* Div superior apenas para verificar qdo o objeto arrastado sai da área delimitada */}
+      {dragActive && (
+        <div
+          className={`absolute bg-none z-20`}
+          style={{ width: "100%", height: "100%" }}
+          onDragLeave={(e) => DeactivateDrag(e)}
+        ></div>
+      )}
       {dragActive && (
         <div
           className={`absolute bg-white/80 flex justify-center items-center z-10`}

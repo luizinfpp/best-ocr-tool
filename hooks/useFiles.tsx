@@ -1,4 +1,4 @@
-import { Dispatch, useContext } from "react";
+import { useContext } from "react";
 import { FilesContext } from "../contexts/filesContext";
 
 type FileContextType = {
