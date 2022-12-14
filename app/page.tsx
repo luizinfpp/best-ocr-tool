@@ -2,12 +2,13 @@
 import localFont from "@next/font/local";
 import DragAndDropComponent from "../components/drag-and-drop";
 import TextFieldComponent from "../components/text-field";
+import ButtonSendWithLoading from "../components/btn-send-loading";
 import { FormEvent, useContext, useEffect, useRef, useState } from "react";
 import { FilesContext } from "../contexts/filesContext";
 import { createWorker } from "tesseract.js";
 import { useFiles } from "../hooks/useFiles";
 import { useStorage } from "../hooks/useStorage";
-import { url } from "inspector";
+
 
 const myFont = localFont({ src: "../public/Comfortaa-VariableFont_wght.ttf" });
 
@@ -24,6 +25,8 @@ export default function Home() {
   const worker = createWorker({
     errorHandler: (err) => console.error(err),
   });
+
+  
 
   const DoOcr = async () => {
     let urlList: string[] = [];
@@ -43,10 +46,8 @@ export default function Home() {
     });
 
     doFilesOCR.then(() => {
-
       //Cria uma promise para interpretar cada link -- na ordem da string
       let requests = urlList.reduce((promiseChain, url) => {
-
         return promiseChain.then(
           () =>
             new Promise<void>((resolve) => {
@@ -98,7 +99,15 @@ export default function Home() {
 
       await navigator.clipboard.read().then((clipboardContents) => {
         for (const item of clipboardContents) {
-          if (!item.types.filter(t => t.includes("image/png") || t.includes("image/jpg") || t.includes("image/bmp") || t.includes("image/webp"))) {
+          if (
+            !item.types.filter(
+              (t) =>
+                t.includes("image/png") ||
+                t.includes("image/jpg") ||
+                t.includes("image/bmp") ||
+                t.includes("image/webp")
+            )
+          ) {
             throw new Error(
               "O conteúdo da área de transferência não é do tipo imagem."
             );
@@ -114,7 +123,15 @@ export default function Home() {
               d.getMilliseconds() +
               ".png";
 
-            let f: File = new File([dropBlob], fileName, {type: item.types.filter(t => t.includes("image/png") || t.includes("image/jpg") || t.includes("image/bmp") || t.includes("image/webp"))[0]});
+            let f: File = new File([dropBlob], fileName, {
+              type: item.types.filter(
+                (t) =>
+                  t.includes("image/png") ||
+                  t.includes("image/jpg") ||
+                  t.includes("image/bmp") ||
+                  t.includes("image/webp")
+              )[0],
+            });
 
             filesOp.addFile(f);
           });
@@ -142,7 +159,7 @@ export default function Home() {
         <h1 className="text-teal-700 text-5xl font-bold text-center my-12 select-none">
           O Melhor OCR da Galáxia
         </h1>
-        <div className="flex gap-12 grow pb-14">
+        <div className="flex gap-12 grow pb-14 max-h-[80vh]">
           <div className="flex flex-col">
             <div className="flex gap-2 mb-3">
               <input
@@ -168,19 +185,7 @@ export default function Home() {
               </span>
             </div>
             <DragAndDropComponent fileList={files} />
-            <span
-              className={` ${
-                loading > 0
-                  ? "bg-emerald-200 text-teal-700"
-                  : "bg-teal-700 text-white hover:bg-teal-900"
-              } text-[0.9rem] hover:cursor-pointer px-3 py-3 text-center rounded-lg select-none mt-3 font-bold text-lg`}
-              onClick={() => {
-                if (loading == 0) DoOcr();
-              }}
-              ref={pasteFileRef}
-            >
-              {loading > 0 ? "Carregando" : "Converter em texto"}
-            </span>
+            <ButtonSendWithLoading loading={loading} DoOcr={DoOcr}/>
           </div>
           <div>
             <TextFieldComponent text={textOcr} />
