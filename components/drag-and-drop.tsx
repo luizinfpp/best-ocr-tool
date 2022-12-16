@@ -1,12 +1,41 @@
 "use client";
 import React, { useState } from "react";
 import { useFiles } from "../hooks/useFiles";
+import styled from "styled-components";
+import { AnimatePresence, motion } from "framer-motion";
 
 type DragDropProps = {
   fileList: Array<File>;
+  loading: number;
 };
 
-const DragAndDropComponent = ({ fileList }: DragDropProps) => {
+const Loader = styled.div`
+  width: 32px;
+  height: 32px;
+  border: 5px solid rgb(15, 118, 110, 0.8); //teal-700
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  box-sizing: border-box;
+  animation: rotation 1s linear infinite;
+
+  @keyframes rotation {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+const loaderVariants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0, transition: { duration: 1 } },
+  exit: { opacity: 0, y: -20, transition: { duration: 1 } },
+};
+
+const DragAndDropComponent = ({ fileList, loading }: DragDropProps) => {
   const [dragActive, setDragActive] = useState(false);
 
   const filesOp = useFiles();
@@ -79,19 +108,50 @@ const DragAndDropComponent = ({ fileList }: DragDropProps) => {
           </p>
         </div>
       )}
+      {/* Tela de carregamento enquanto o programa executa a tradução das imagens */}
+      {loading > 0 && (
+        <AnimatePresence mode="wait">
+          <div
+            className={`absolute bg-white/80 flex flex-col justify-center items-center z-10`}
+            style={{ width: "100%", height: "100%" }}
+          >
+            {loading == 1 && (
+              <motion.p variants={loaderVariants} initial="initial" animate="animate" exit="exit" className="text-center text-lg text-gray-600 select-none mb-4 p-3">
+                Subindo imagens
+              </motion.p>
+            )}
+            {loading == 2 && (
+              <motion.p variants={loaderVariants} initial="initial" animate="animate" exit="exit" className="text-center text-lg text-gray-600 select-none mb-4 p-3">
+                Realizando conversões
+              </motion.p>
+            )}
+            {loading == 3 && (
+              <motion.p variants={loaderVariants} initial="initial" animate="animate" exit="exit" className="text-center text-lg text-gray-600 select-none mb-4 p-3">
+                Limpando espaço no servidor
+              </motion.p>
+            )}
+            {loading == 4 && (
+              <motion.p variants={loaderVariants} initial="initial" animate="animate" exit="exit" className="text-center text-lg text-gray-600 select-none mb-4 p-3">
+                Pronto!
+              </motion.p>
+            )}
+            <Loader></Loader>
+          </div>
+        </AnimatePresence>
+      )}
       {fileList.length == 0 && (
         <div
           className="p-5 flex justify-center items-center"
           style={{ width: "25vw", height: "100%" }}
         >
-          <p className="text-center text-md text-gray-500 leading-loose select-none">
+          <p className="text-center text-md text-gray-700 leading-loose select-none">
             Arraste aqui a imagem para adicionar
             <br />
-            ou
+            <span className="text-sm">ou</span>
             <br />
             Clique para escolher o arquivo
             <br />
-            ou
+            <span className="text-sm">ou</span>
             <br />
             Cole o arquivo de sua área de transferência
           </p>

@@ -46,6 +46,7 @@ export default function Home() {
     });
 
     doFilesOCR.then(() => {
+      setLoading(2);
       //Cria uma promise para interpretar cada link -- na ordem da string
       let requests = urlList.reduce((promiseChain, url) => {
         return promiseChain.then(
@@ -66,12 +67,17 @@ export default function Home() {
       requests
         .then(() => {
           worker.terminate().then(() => {
+            setLoading(3);
             setTextOcr(entireText);
             storageOp.deleteFiles();
           });
         })
         .then(() => {
-          setLoading(0);
+          setLoading(4);
+        }).then(() => {
+          setTimeout(() => {
+            setLoading(0);
+          }, 4000);
         });
     });
   };
@@ -150,7 +156,7 @@ export default function Home() {
   return (
     <main
       className={myFont.className}
-      style={{ backgroundColor: "#e2eef6", width: "100vw", height: "100vh" }}
+      style={{ background: "none", width: "100vw", height: "100vh" }}
     >
       <div
         className="p-2 flex justify-center items-center flex-col"
@@ -184,7 +190,7 @@ export default function Home() {
                 Colar imagem
               </span>
             </div>
-            <DragAndDropComponent fileList={files} />
+            <DragAndDropComponent fileList={files} loading={loading}/>
             <ButtonSendWithLoading loading={loading} DoOcr={DoOcr}/>
           </div>
           <div>
