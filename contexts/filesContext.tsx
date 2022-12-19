@@ -1,3 +1,4 @@
+"use client"
 import React, { createContext, useEffect, useReducer} from 'react';
 import { filesReducer } from '../reducers/filesReducer'
 

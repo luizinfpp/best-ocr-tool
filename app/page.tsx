@@ -9,7 +9,6 @@ import { createWorker } from "tesseract.js";
 import { useFiles } from "../hooks/useFiles";
 import { useStorage } from "../hooks/useStorage";
 
-
 const myFont = localFont({ src: "../public/Comfortaa-VariableFont_wght.ttf" });
 
 export default function Home() {
@@ -25,8 +24,6 @@ export default function Home() {
   const worker = createWorker({
     errorHandler: (err) => console.error(err),
   });
-
-  
 
   const DoOcr = async () => {
     let urlList: string[] = [];
@@ -64,21 +61,25 @@ export default function Home() {
       }, Promise.resolve());
 
       //Ao fim da execução
-      requests
-        .then(() => {
-          worker.terminate().then(() => {
+      requests.then(() => {
+        worker
+          .terminate()
+          .then(() => {
             setLoading(3);
             setTextOcr(entireText);
             storageOp.deleteFiles();
+          })
+          .then(() => {
+            setTimeout(() => {
+              setLoading(4);  
+            }, 1500);
+          })
+          .then(() => {
+            setTimeout(() => {
+              setLoading(0);
+            }, 4000);
           });
-        })
-        .then(() => {
-          setLoading(4);
-        }).then(() => {
-          setTimeout(() => {
-            setLoading(0);
-          }, 4000);
-        });
+      });
     });
   };
 
@@ -153,6 +154,10 @@ export default function Home() {
     }
   }
 
+  useEffect(() => {
+    console.log(loading);
+  }, [loading]);
+
   return (
     <main
       className={myFont.className}
@@ -190,8 +195,8 @@ export default function Home() {
                 Colar imagem
               </span>
             </div>
-            <DragAndDropComponent fileList={files} loading={loading}/>
-            <ButtonSendWithLoading loading={loading} DoOcr={DoOcr}/>
+            <DragAndDropComponent fileList={files} loading={loading} />
+            <ButtonSendWithLoading loading={loading} DoOcr={DoOcr} />
           </div>
           <div>
             <TextFieldComponent text={textOcr} />
